@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="android:Theme.Material.Light.DarkActionBar">
+        <item name="android:windowBackground">@color/background_holo_light</item>
+    </style>
+    <style name="ActionBarStyle" parent="android:Widget.Material.ActionBar.Solid">
+        <item name="android:displayOptions">useLogo|showHome</item>
+    </style>
+</resources>
