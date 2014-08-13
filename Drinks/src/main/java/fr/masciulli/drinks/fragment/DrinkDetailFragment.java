@@ -3,13 +3,17 @@ package fr.masciulli.drinks.fragment;
 import android.animation.TimeInterpolator;
 import android.app.Fragment;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Html;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,11 +25,22 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.MessageEvent;
+import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.NodeApi;
+import com.google.android.gms.wearable.Wearable;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 import com.squareup.picasso.Transformation;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -38,13 +53,20 @@ import fr.masciulli.drinks.view.BlurTransformation;
 import fr.masciulli.drinks.view.ObservableScrollView;
 import fr.masciulli.drinks.view.ScrollViewListener;
 
-public class DrinkDetailFragment extends Fragment implements ScrollViewListener {
+public class DrinkDetailFragment extends Fragment implements ScrollViewListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, MessageApi.MessageListener {
 
     private static final String STATE_DRINK = "drink";
+    private static final String START_ACTIVITY_PATH = "/start-activity";
     private static final long ANIM_IMAGE_ENTER_DURATION = 500;
     private static final long ANIM_TEXT_ENTER_DURATION = 500;
     private static final long ANIM_IMAGE_ENTER_STARTDELAY = 300;
     private static final long ANIM_COLORBOX_ENTER_DURATION = 200;
+
+    /** Request code for launching the Intent to resolve Google Play services errors. */
+    private static final int REQUEST_RESOLVE_ERROR = 1000;
+
+    private GoogleApiClient mGoogleApiClient;
+    private boolean mResolvingError;
 
     private static final TimeInterpolator sDecelerator = new DecelerateInterpolator();
 
@@ -97,6 +119,17 @@ public class DrinkDetailFragment extends Fragment implements ScrollViewListener 
     };
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        mGoogleApiClient = new GoogleApiClient.Builder(getActivity())
+                .addApi(Wearable.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_drink_detail, container, false);
         ButterKnife.inject(this, root);
@@ -137,6 +170,104 @@ public class DrinkDetailFragment extends Fragment implements ScrollViewListener 
         }
 
         return root;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (!mResolvingError) {
+            mGoogleApiClient.connect();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        if (!mResolvingError && null != mGoogleApiClient && mGoogleApiClient.isConnected()) {
+            Wearable.MessageApi.removeListener(mGoogleApiClient, this);
+            mGoogleApiClient.disconnect();
+        }
+        super.onStop();
+    }
+
+    private Collection<String> getNodes() {
+        Log.d("DrinkDetailFragment","getting nodes");
+        HashSet<String> results = new HashSet<String>();
+        NodeApi.GetConnectedNodesResult nodes =
+                Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
+        Log.d("DrinkDetailFragment","nodes retrieved");
+
+        for (Node node : nodes.getNodes()) {
+            results.add(node.getId());
+        }
+
+        return results;
+    }
+
+    private void pushToWearable() {
+        new PushToWearableTask().execute();
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        mResolvingError = false;
+        Wearable.MessageApi.addListener(mGoogleApiClient, this);
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+    return;
+    }
+
+    @Override
+    public void onMessageReceived(MessageEvent messageEvent) {
+        return;
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult result) {
+        if (mResolvingError) {
+            // Already attempting to resolve an error.
+            return;
+        } else if (result.hasResolution()) {
+            try {
+                mResolvingError = true;
+                result.startResolutionForResult(getActivity(), REQUEST_RESOLVE_ERROR);
+            } catch (IntentSender.SendIntentException e) {
+                // There was an error with the resolution intent. Try again.
+                mGoogleApiClient.connect();
+            }
+        } else {
+            mResolvingError = false;
+            Wearable.MessageApi.removeListener(mGoogleApiClient, this);
+        }
+    }
+
+    private class PushToWearableTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... voids) {
+            final Collection<String> nodes = getNodes();
+            for (String node : nodes) {
+                sendStartActivityMessage(node);
+            }
+            return null;
+        }
+    }
+
+    private void sendStartActivityMessage(String node) {
+        Wearable.MessageApi.sendMessage(
+                mGoogleApiClient, node, START_ACTIVITY_PATH, new byte[0]).setResultCallback(
+                new ResultCallback<MessageApi.SendMessageResult>() {
+                    @Override
+                    public void onResult(MessageApi.SendMessageResult sendMessageResult) {
+                        if (!sendMessageResult.getStatus().isSuccess()) {
+                            Log.e("DrinkDetailFragment", "Failed to send message with status code: "
+                                    + sendMessageResult.getStatus().getStatusCode());
+                        } else {
+                            Log.d("DrinkDetailFragment", "SUCCESS");
+                        }
+                    }
+                }
+        );
     }
 
     @OnClick(R.id.wikipedia)
@@ -242,16 +373,6 @@ public class DrinkDetailFragment extends Fragment implements ScrollViewListener 
         mScrollView.setVisibility(View.VISIBLE);
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                getActivity().finish();
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
     private void fakeOnScrollChanged() {
         onScrollChanged(mScrollView, mScrollView.getScrollX(),
                 mScrollView.getScrollY(), mScrollView.getScrollX(), mScrollView.getScrollY());
@@ -281,5 +402,25 @@ public class DrinkDetailFragment extends Fragment implements ScrollViewListener 
                 colorViews[i].setBackgroundColor(colors.get(i));
             }
         }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+
+        inflater.inflate(R.menu.drink_detail, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.push_to_wearable:
+                pushToWearable();
+                return true;
+            case android.R.id.home:
+                getActivity().finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
