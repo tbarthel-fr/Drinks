@@ -6,6 +6,12 @@
         android:icon="@drawable/ic_launcher"
         android:theme="@android:style/Theme.DeviceDefault">
         <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
+        <service
+            android:name=".DataLayerListenerService" >
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.BIND_LISTENER" />
+            </intent-filter>
+        </service>
         <activity
             android:name=".WearDrinkActivity"
             android:label="@string/app_name" >
