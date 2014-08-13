@@ -1,6 +1,7 @@
 package fr.masciulli.drinks;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
@@ -16,12 +17,14 @@ public class WearDrinkActivity extends Activity {
 
     private TextView mTextView;
 
-    private GoogleApiClient mGoogleApiClient;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wear_drink);
         mTextView = (TextView)findViewById(R.id.text);
+        Intent intent = getIntent();
+        if (intent.hasExtra("drink")) {
+            mTextView.setText(intent.getStringExtra("drink"));
+        }
     }
 }

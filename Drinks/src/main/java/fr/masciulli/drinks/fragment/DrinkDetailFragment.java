@@ -255,7 +255,7 @@ public class DrinkDetailFragment extends Fragment implements ScrollViewListener,
 
     private void sendStartActivityMessage(String node) {
         Wearable.MessageApi.sendMessage(
-                mGoogleApiClient, node, START_ACTIVITY_PATH, new byte[0]).setResultCallback(
+                mGoogleApiClient, node, START_ACTIVITY_PATH, mDrink.name.getBytes()).setResultCallback(
                 new ResultCallback<MessageApi.SendMessageResult>() {
                     @Override
                     public void onResult(MessageApi.SendMessageResult sendMessageResult) {

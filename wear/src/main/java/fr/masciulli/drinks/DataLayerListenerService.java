@@ -30,7 +30,9 @@ public class DataLayerListenerService extends WearableListenerService {
 
         // Check to see if the message is to start an activity
         if (messageEvent.getPath().equals(START_ACTIVITY_PATH)) {
+            String drinkName = new String(messageEvent.getData());
             Intent startIntent = new Intent(this, WearDrinkActivity.class);
+            startIntent.putExtra("drink", drinkName);
             startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(startIntent);
         }
