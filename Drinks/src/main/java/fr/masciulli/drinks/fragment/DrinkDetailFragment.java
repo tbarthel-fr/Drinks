@@ -33,6 +33,7 @@ import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
+import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 import com.squareup.picasso.Transformation;
@@ -67,6 +68,7 @@ public class DrinkDetailFragment extends Fragment implements ScrollViewListener,
 
     private GoogleApiClient mGoogleApiClient;
     private boolean mResolvingError;
+    private Gson mGson = new Gson();
 
     private static final TimeInterpolator sDecelerator = new DecelerateInterpolator();
 
@@ -255,7 +257,7 @@ public class DrinkDetailFragment extends Fragment implements ScrollViewListener,
 
     private void sendStartActivityMessage(String node) {
         Wearable.MessageApi.sendMessage(
-                mGoogleApiClient, node, START_ACTIVITY_PATH, mDrink.name.getBytes()).setResultCallback(
+                mGoogleApiClient, node, START_ACTIVITY_PATH, mGson.toJson(mDrink).getBytes()).setResultCallback(
                 new ResultCallback<MessageApi.SendMessageResult>() {
                     @Override
                     public void onResult(MessageApi.SendMessageResult sendMessageResult) {

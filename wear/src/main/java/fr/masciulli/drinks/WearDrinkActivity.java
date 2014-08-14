@@ -16,6 +16,7 @@ import com.google.android.gms.wearable.Wearable;
 public class WearDrinkActivity extends Activity {
 
     private TextView mTextView;
+    private WearDrink mDrink;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,7 +25,14 @@ public class WearDrinkActivity extends Activity {
         mTextView = (TextView)findViewById(R.id.text);
         Intent intent = getIntent();
         if (intent.hasExtra("drink")) {
-            mTextView.setText(intent.getStringExtra("drink"));
+            mDrink = intent.getParcelableExtra("drink");
+            updateViews();
+        }
+    }
+
+    private void updateViews() {
+        if (mDrink != null) {
+            mTextView.setText(mDrink.name);
         }
     }
 }
