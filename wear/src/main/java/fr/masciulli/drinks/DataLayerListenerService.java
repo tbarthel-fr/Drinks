@@ -11,7 +11,7 @@ import com.google.gson.Gson;
 
 public class DataLayerListenerService extends WearableListenerService {
 
-    private static final String TAG = "DataLayerListenerServic";
+    private static final String TAG = "DataLayerListenerService";
 
     private static final String START_ACTIVITY_PATH = "/start-activity";
 
