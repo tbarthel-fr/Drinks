@@ -5,31 +5,28 @@
     android:layout_height="match_parent">
 
     <LinearLayout
+        android:padding="12dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
         <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-light"
             android:id="@+id/title"
+            android:textSize="20sp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
         <TextView xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/ingredients"/>
-
-        <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:fontFamily="sans-serif-light"
             android:id="@+id/ingredients"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
         <TextView xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/instructions"/>
-
-        <TextView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:fontFamily="sans-serif-light"
+            android:layout_marginTop="8dp"
             android:id="@+id/instructions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
